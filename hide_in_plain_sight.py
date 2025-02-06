@@ -124,7 +124,7 @@ def hide_in_plain_sight(file_seed):
     report_with_problem_index = []
 
     def find_reports_with_problem(
-        index, report, labeled_report, report_with_problem_index, label_dict
+            index, report, labeled_report, report_with_problem_index, label_dict
     ):
         report_index = 0
         labeled_report_index = 0
@@ -204,7 +204,7 @@ def hide_in_plain_sight(file_seed):
         return
 
     def find_reports_with_problem_old(
-        index, report, labeled_report, report_with_problem_index, label_dict
+            index, report, labeled_report, report_with_problem_index, label_dict
     ):
         split_labeled_sentence = re.split(r"(\W)", labeled_report, flags=re.DOTALL)
         split_labeled_sentence = [
@@ -280,7 +280,7 @@ def hide_in_plain_sight(file_seed):
 
     def parse_date_format(date):
         """Parse the format of a date which is a string
-        Returns its format as a string
+Returns its format as a string
         """
         if bool(re.match(r".*([a-z]|[A-Z]).*", date, flags=re.DOTALL)):
             # It has some letters in it
@@ -311,7 +311,7 @@ def hide_in_plain_sight(file_seed):
                 return "full_digits_no_trailing_zeros"  #'1/1/2020'
 
     def ensure_frequency_threshold(
-        frequencies_dict, threshhold=0.025, f_filter=None, t_filter=None
+            frequencies_dict, threshhold=0.025, f_filter=None, t_filter=None
     ):
         frequencies_dict_equi = frequencies_dict.copy()
         total = 0
@@ -366,7 +366,7 @@ def hide_in_plain_sight(file_seed):
 
     def count_frequencies(date_list):
         """Takes the list of all dates of the reports
-        Returns the number of dates per date format
+Returns the number of dates per date format
         """
         else_type = []
         frequencies_dict = {
@@ -482,10 +482,11 @@ def hide_in_plain_sight(file_seed):
 
     def generate_random_date(start, end):
         """
-        This function will return a random datetime between two datetime
-        objects.
-        Start and end must be round dates
+This function will return a random datetime between two datetime
+objects.
+Start and end must be round dates
         """
+        print("start date: " + str(start) + " end date " + str(end))
         assert (end - start).days >= 0
         if start == end or (end - start).days < 365:
             return start + datetime.timedelta(days=random.randint(-365, 365))
@@ -504,16 +505,16 @@ def hide_in_plain_sight(file_seed):
         )
 
     def generate_date(
-        date,
-        distribution_probabilities,
-        convert_date_to_string,
-        convert_string_to_date,
-        min_date,
-        max_date,
-        store_dates=None,
-        post_distribution_probabilities=None,
-        constraint=None,
-        index=None,
+            date,
+            distribution_probabilities,
+            convert_date_to_string,
+            convert_string_to_date,
+            min_date,
+            max_date,
+            store_dates=None,
+            post_distribution_probabilities=None,
+            constraint=None,
+            index=None,
     ):
         parsed_date = None
 
@@ -790,14 +791,14 @@ def hide_in_plain_sight(file_seed):
             index += 1
 
         return max(min_date, datetime.datetime.strptime("1/1/2000", "%m/%d/%Y")), min(
-            max_date, datetime.datetime.strptime("1/1/2022", "%m/%d/%Y")
+            max_date, datetime.datetime.strptime(datetime.datetime.today().strftime("%m/%d/%Y"), "%m/%d/%Y")
         )
 
     min_date, max_date = get_min_max_dates(
         phi_values_dict["DATES"], convert_string_to_date
     )
 
-    def find_problem_parsing(report):
+    def find_problem_parsing(report, store_dates=None):
         for x in re.findall(
             r"\\DATES\[\[.+?\]\]", report.LabeledReport, flags=re.DOTALL
         ):
@@ -849,7 +850,7 @@ def hide_in_plain_sight(file_seed):
 
     def parse_name_format(name):
         """Parse the format of a name which is a string
-        Returns its format as a string
+Returns its format as a string
         """
         if name.count(",") == 2:
             return "NAME, NAME, CRE"
@@ -860,7 +861,7 @@ def hide_in_plain_sight(file_seed):
 
     def count_name_format_frequencies(name_list):
         """Takes the list of all names of the reports
-        Returns the number of names per name format
+Returns the number of names per name format
         """
         frequencies_dict = {
             "NAME, NAME, CRE": 0,
@@ -982,14 +983,14 @@ def hide_in_plain_sight(file_seed):
     already_used_names = []
 
     def generate_random_name(
-        data_firstnames,
-        data_surnames,
-        already_used_names,
-        already_used_names_more_frequent,
+            data_firstnames,
+            data_surnames,
+            already_used_names,
+            already_used_names_more_frequent,
     ):
         """
-        This function will return a random name.
-        """
+This function will return a random name.
+"""
 
         if len(already_used_names) > 0 and random.random() > 0.9:
             if random.random() > 0.4 and len(already_used_names_more_frequent):
@@ -1159,16 +1160,16 @@ def hide_in_plain_sight(file_seed):
     already_used_names_more_frequent = []
 
     def generate_name(
-        name,
-        distribution_probabilities,
-        convert_name_to_string,
-        data_firstnames,
-        data_surnames,
-        already_used_names,
-        already_used_names_more_frequent,
-        post_distribution_probabilities=None,
-        constraint=None,
-        store_names=None,
+            name,
+            distribution_probabilities,
+            convert_name_to_string,
+            data_firstnames,
+            data_surnames,
+            already_used_names,
+            already_used_names_more_frequent,
+            post_distribution_probabilities=None,
+            constraint=None,
+            store_names=None,
     ):
 
         parsed_name = name.lower().split()
@@ -1221,13 +1222,13 @@ def hide_in_plain_sight(file_seed):
 
     def parse_patient_format(patient):
         """Parse the format of a patient which is a string
-        Returns its format as a string
+Returns its format as a string
         """
         return "STANDARD"
 
     def count_patient_format_frequencies(patient_list):
         """Takes the list of all patients of the reports
-        Returns the number of patients per patients format
+Returns the number of patients per patients format
         """
         frequencies_dict = {"STANDARD": 0}
 
@@ -1281,14 +1282,14 @@ def hide_in_plain_sight(file_seed):
     already_used_patients_more_frequent = []
 
     def generate_random_patient(
-        data_firstnames,
-        data_surnames,
-        already_used_patients,
-        already_used_patients_more_frequent,
+            data_firstnames,
+            data_surnames,
+            already_used_patients,
+            already_used_patients_more_frequent,
     ):
         """
-        This function will return a random patient.
-        """
+This function will return a random patient.
+"""
 
         if len(already_used_patients) > 0 and random.random() > 0.9:
             if random.random() > 0.8 and len(already_used_patients_more_frequent):
@@ -1374,15 +1375,15 @@ def hide_in_plain_sight(file_seed):
     already_used_patients_more_frequent = []
 
     def generate_patient(
-        patient,
-        distribution_probabilities,
-        convert_patient_to_string,
-        data_firstnames,
-        data_surnames,
-        already_used_patients,
-        already_used_patients_more_frequent,
-        post_distribution_probabilities=None,
-        constraint=None,
+            patient,
+            distribution_probabilities,
+            convert_patient_to_string,
+            data_firstnames,
+            data_surnames,
+            already_used_patients,
+            already_used_patients_more_frequent,
+            post_distribution_probabilities=None,
+            constraint=None,
     ):
 
         parsed_patient = patient.lower().split()
@@ -1522,7 +1523,7 @@ def hide_in_plain_sight(file_seed):
 
     def parse_hospital_format(name):
         """Parse the format of a hospital which is a string
-        Returns its format as a string
+Returns its format as a string
         """
         if name.strip().count(" ") > 0:
             return "long_form"
@@ -1531,7 +1532,7 @@ def hide_in_plain_sight(file_seed):
 
     def count_hospital_format_frequencies(hospital_list):
         """Takes the list of all hospitals of the reports
-        Returns the number of hospitals per hospital format
+Returns the number of hospitals per hospital format
         """
         frequencies_dict = {"long_form": 0, "short_form": 0}
 
@@ -1616,14 +1617,14 @@ def hide_in_plain_sight(file_seed):
     already_used_hospitals_more_frequent = []
 
     def generate_random_hospital(
-        data_hospitals,
-        data_frequent_tokens,
-        already_used_hospitals,
-        already_used_hospitals_more_frequent,
+            data_hospitals,
+            data_frequent_tokens,
+            already_used_hospitals,
+            already_used_hospitals_more_frequent,
     ):
         """
-        This function will return a random hospital.
-        """
+This function will return a random hospital.
+"""
 
         if random.random() > (1 / (len(already_used_hospitals) + 1)):
             if random.random() > 0.2 and len(already_used_hospitals_more_frequent):
@@ -1769,15 +1770,15 @@ def hide_in_plain_sight(file_seed):
         return False
 
     def generate_hospitals(
-        old_hospital,
-        distribution_probabilities,
-        convert_hospital_to_string,
-        data_hospitals,
-        data_frequent_tokens,
-        already_used_hospitals,
-        already_used_hospitals_more_frequent,
-        post_distribution_probabilities=None,
-        constraint=None,
+            old_hospital,
+            distribution_probabilities,
+            convert_hospital_to_string,
+            data_hospitals,
+            data_frequent_tokens,
+            already_used_hospitals,
+            already_used_hospitals_more_frequent,
+            post_distribution_probabilities=None,
+            constraint=None,
     ):
 
         parsed_hospital = old_hospital.lower().split()
@@ -1858,11 +1859,11 @@ def hide_in_plain_sight(file_seed):
     already_used_vendors_more_frequent = []
 
     def generate_random_vendor(
-        data_vendors, already_used_vendors, already_used_vendors_more_frequent
+            data_vendors, already_used_vendors, already_used_vendors_more_frequent
     ):
         """
-        This function will return a random vendor.
-        """
+This function will return a random vendor.
+"""
 
         if random.random() > (1 / (len(already_used_vendors) + 1)):
             if random.random() > 0.2 and len(already_used_vendors_more_frequent):
@@ -1944,12 +1945,12 @@ def hide_in_plain_sight(file_seed):
         return False
 
     def generate_vendor(
-        old_vendor,
-        data_vendors,
-        already_used_vendors,
-        already_used_vendors_more_frequent,
-        post_distribution_probabilities=None,
-        constraint=None,
+            old_vendor,
+            data_vendors,
+            already_used_vendors,
+            already_used_vendors_more_frequent,
+            post_distribution_probabilities=None,
+            constraint=None,
     ):
 
         item = None
@@ -2026,8 +2027,8 @@ def hide_in_plain_sight(file_seed):
 
     def generate_random_unique(already_used_unique, already_used_unique_more_frequent):
         """
-        This function will return a random unique.
-        """
+This function will return a random unique.
+"""
 
         if random.random() > 0.7 and len(already_used_unique):
             if random.random() > 0.5 and len(already_used_unique_more_frequent):
@@ -2087,11 +2088,11 @@ def hide_in_plain_sight(file_seed):
         return False
 
     def generate_unique(
-        old_unique,
-        already_used_unique,
-        already_used_unique_more_frequent,
-        post_distribution_probabilities=None,
-        constraint=None,
+            old_unique,
+            already_used_unique,
+            already_used_unique_more_frequent,
+            post_distribution_probabilities=None,
+            constraint=None,
     ):
 
         item = None
@@ -2160,8 +2161,8 @@ def hide_in_plain_sight(file_seed):
 
     def generate_random_phone(already_used_phone, already_used_phone_more_frequent):
         """
-        This function will return a random phone.
-        """
+This function will return a random phone.
+"""
 
         if random.random() > 0.7 and len(already_used_phone):
             if random.random() > 0.5 and len(already_used_phone_more_frequent):
@@ -2207,11 +2208,11 @@ def hide_in_plain_sight(file_seed):
         return False
 
     def generate_phone(
-        old_phone,
-        already_used_phone,
-        already_used_phone_more_frequent,
-        post_distribution_probabilities=None,
-        constraint=None,
+            old_phone,
+            already_used_phone,
+            already_used_phone_more_frequent,
+            post_distribution_probabilities=None,
+            constraint=None,
     ):
         item = None
         phone = None
@@ -2252,7 +2253,7 @@ def hide_in_plain_sight(file_seed):
 
     def generate_random_age(already_used_age, already_used_age_more_frequent):
         """
-        This function will return a random age.
+This function will return a random age.
         """
         if random.random() > 0.05:
             age = random.randint(90, 100)
@@ -2279,11 +2280,11 @@ def hide_in_plain_sight(file_seed):
         return False
 
     def generate_age(
-        old_age,
-        already_used_age,
-        already_used_age_more_frequent,
-        post_distribution_probabilities=None,
-        constraint=None,
+            old_age,
+            already_used_age,
+            already_used_age_more_frequent,
+            post_distribution_probabilities=None,
+            constraint=None,
     ):
         item = None
         age = None
@@ -2653,11 +2654,11 @@ def hide_in_plain_sight(file_seed):
     phi_lengths = []
 
     def generate_deidentified_report(
-        report,
-        dict_generate_phi,
-        dict_generate_constraint,
-        error_prob=1 / 500,
-        small_error_prob=1 / 100,
+            report,
+            dict_generate_phi,
+            dict_generate_constraint,
+            error_prob=1 / 500,
+            small_error_prob=1 / 100,
     ):
         # global count
         # report is a labeled report with PHI labels

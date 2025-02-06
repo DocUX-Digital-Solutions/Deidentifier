@@ -76,8 +76,11 @@ def deidentifier_model(file_seed, device, num_workers, batch_size, hospitals, ve
     reports_save = reports[:]
 
     for break_token in break_tokens:
+        processed_data = list(classifier.preprocess(break_token))  # Convert generator to a list
+        input_ids = processed_data[0]["input_ids"]  # Access first element
+        value = int(input_ids[0][1])  # Extract and convert the desired value
         break_tokens_ids.append(
-            int(classifier.preprocess(break_token)["input_ids"][0][1])
+            value
         )
 
     reports_tokenized = classifier.tokenizer(
@@ -745,8 +748,8 @@ def deidentifier_model(file_seed, device, num_workers, batch_size, hospitals, ve
                 label_to_prob[prediction_list[index]["entity"]] += prediction_list[
                     index
                 ]["score"] * (
-                    prediction_list[index]["end"] - prediction_list[index]["start"]
-                )
+                        prediction_list[index]["end"] - prediction_list[index]["start"]
+                    )
 
                 while (
                     index + 1 < len(prediction_list)
@@ -757,8 +760,8 @@ def deidentifier_model(file_seed, device, num_workers, batch_size, hospitals, ve
                     label_to_prob[prediction_list[index]["entity"]] += prediction_list[
                         index
                     ]["score"] * (
-                        prediction_list[index]["end"] - prediction_list[index]["start"]
-                    )
+                            prediction_list[index]["end"] - prediction_list[index]["start"]
+                        )
 
                 end_index = index
 
@@ -838,20 +841,20 @@ def deidentifier_model(file_seed, device, num_workers, batch_size, hospitals, ve
                 )
 
                 prediction_list[index]["score"] = (
-                    prediction_list[index]["score"]
-                    * (prediction_list[index]["end"] - prediction_list[index]["start"])
-                    + prediction_list[index + 1]["score"]
-                    * (
-                        prediction_list[index + 1]["end"]
-                        - prediction_list[index + 1]["start"]
+                        prediction_list[index]["score"]
+                        * (prediction_list[index]["end"] - prediction_list[index]["start"])
+                        + prediction_list[index + 1]["score"]
+                        * (
+                            prediction_list[index + 1]["end"]
+                            - prediction_list[index + 1]["start"]
+                        )
+                    ) / (
+                        (prediction_list[index]["end"] - prediction_list[index]["start"])
+                        + (
+                            prediction_list[index + 1]["end"]
+                            - prediction_list[index + 1]["start"]
+                        )
                     )
-                ) / (
-                    (prediction_list[index]["end"] - prediction_list[index]["start"])
-                    + (
-                        prediction_list[index + 1]["end"]
-                        - prediction_list[index + 1]["start"]
-                    )
-                )
 
                 prediction_list[index]["end"] = prediction_list[index + 1]["end"]
                 prediction_list[index]["index"] = None
@@ -950,3 +953,4 @@ def deidentifier_model(file_seed, device, num_workers, batch_size, hospitals, ve
     len(reports_save) == len(labeled_reports_reconstituated)
 
     return
+    
