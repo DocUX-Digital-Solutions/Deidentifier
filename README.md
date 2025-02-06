@@ -10,11 +10,44 @@ This project was made possible by MIDRC and part of **MIDRC CRP 1 - Natural lang
 
 **Development Team**: Pierre Chambon (Stanford University), Tessa S. Cook (Penn University), Curtis P. Langlotz (Stanford University).
 
+# Install Dependencies
+The original repo that this was cloned from asks you to run the following to pull in dependencies which WILL NOT WORK
+```bat
+foo@bar:~$ pip install -r requirements.txt
+```
+You should manually install the dependencies
+
+```bat
+foo@bar:~$ pip install numpy
+foo@bar:~$ pip install openpyxl
+foo@bar:~$ pip install pandas
+foo@bar:~$ pip install xlrd
+foo@bar:~$ pip install transformers
+foo@bar:~$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+# Formatting files
+This model expects all input data to be in .npy file so the data you decide to use must be oconverted first. Here is an example of how you can do that:
+```python
+import numpy as np
+
+# Step 1: Read the clinical note from the text file
+with open("clinical_note.txt", "r", encoding="utf-8") as file:
+    clinical_note = file.read()
+
+# Step 2: Convert the text into a NumPy array (optional)
+clinical_note_array = np.array([clinical_note], dtype=object)  # Store as an object array
+
+# Step 3: Save the clinical note as a .npy file
+np.save("clinical_note.npy", clinical_note_array)
+
+print("Clinical note saved as clinical_note.npy")
+```
 # Getting the model running
 
 ```bat
-foo@bar:~$ git clone https://github.com/MIDRC/Stanford_Penn_Deidentifier.git
-foo@bar:~$ cd Stanford_Penn_Deidentifier
+foo@bar:~$ git clone https://github.com/DocUX-Digital-Solutions/Deidentifier.git
+foo@bar:~$ cd Deidentifier
 ```
 
 Then, make sure you are in a Python virtualenv or conda environment where torch is already installed: otherwise, follow the instructions of https://pytorch.org/.
@@ -23,7 +56,7 @@ Then, make sure you are in a Python virtualenv or conda environment where torch 
 foo@bar:~$ pip show torch
 ```
 
-Once you can confirm that torch is installed, you can run the command:
+Once you can confirm that torch is installed, you can run the command (IT WON'T WORK!):
 
 ```bat
 foo@bar:~$ pip install -r requirements.txt
@@ -46,6 +79,11 @@ As an example, you could run:
 
 ```bat
 foo@bar:~$ python main.py --input_file_path ./reports_stanford.npy --output_file_path ./reports_stanford_deidentified.npy --device cuda:0 cuda:1 cuda:2 --hospital_list stanford washington
+```
+
+If you are running this locally on a Mac you can use the following command which uses the Mac GPU (mps) to accelerate processing. Otherwise use cpu for the --device argument. Make sure you have converted all data into a .npy format. 
+```bat
+foo@bar:~$ python3 main.py --input_file_path /Users/person/Development/DocUX/deidinput/clinical_note.npy --output_file_path ./reports_stanford_deidentified.npy --device mps --hospital_list stanford washington
 ```
 
 # Generating good-looking synthetic PHI
