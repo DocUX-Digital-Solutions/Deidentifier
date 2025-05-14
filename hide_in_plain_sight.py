@@ -1,3 +1,46 @@
+from dataclasses import dataclass
+from typing import List, Dict, Tuple
+
+from frozendict import FrozenOrderedDict
+
+from ml_util.label_tokens import TokenClassificationOutput, CompiledDocLabels, CompiledDocLabelSpoofer
+from ml_util.multi import multi_cpu_map
+
+@dataclass(frozen=True)
+class Spoofer:
+    dict_generate_phi: Dict
+    dict_generate_constraint: Dict
+    error_prob = 1 / 500
+    small_error_prob = 1 / 100
+
+    @classmethod
+    def create(cls):
+        '''
+        ## Based on: generate_deidentified_report
+         Need
+        dict_generate_phi,
+        dict_generate_constraint,
+        '''
+
+    def process_report(self,
+                       report: str,
+                       labels: CompiledDocLabels,
+                       show_mappings: bool = False,
+                       ) -> Tuple[str, FrozenOrderedDict]:
+        spoofer = CompiledDocLabelSpoofer(report, labels)
+        # Add mappings...
+        # DIGDI!!!
+
+        return spoofer.render_new(show_mappings)
+
+    def run(self,
+            reports: List[str],
+            label_sets: List[CompiledDocLabels],
+            ) -> List[Tuple[Tuple[str, FrozenOrderedDict]]]:
+        assert len(reports) == len(label_sets)
+        out = multi_cpu_map(self.process_report, (reports, label_sets))
+
+
 def hide_in_plain_sight(file_seed):
 
     import pandas as pd
@@ -2752,6 +2795,7 @@ This function will return a random age.
 
         return deidentified_report
 
+    # BODY
     deidentified_reports = []
     for index_, labeled_report in enumerate(labeled_reports):
         # print(index_)
