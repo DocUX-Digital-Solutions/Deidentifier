@@ -1,5 +1,5 @@
 from typing import List, Union
-import docux_logger
+from ml_util import docux_logger
 from ml_util.encounter_record import EncounterRecord
 from ml_util.label_tokens import TokenLabeler
 from ml_util.devices import num_cpus, cpu_only
