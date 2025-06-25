@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 import torch
-from hide_in_plain_sight import hide_in_plain_sight
+from old_code.hide_in_plain_sight import hide_in_plain_sight
 from deidentifier_model import deidentifier_model
 from multiprocessing import Process
 import time

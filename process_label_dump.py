@@ -1,12 +1,13 @@
 from typing import List
 
 from date import DateConverter
-from deidentifier_model import LabelPostprocessingModel
-from hide_in_plain_sight import Spoofer
+from label_processing import LabelPostprocessingModel
 from ml_util.huggingface_interface import TokenClassificationDump
 from ml_util.label_tokens import compiled_doc_labels
 from ml_util.list_file import load_list_file
 from ml_util import random_utils
+from spoofer import Spoofer
+
 
 def load_input(input_jsonls: List[str]):
     input: List[str] = []
