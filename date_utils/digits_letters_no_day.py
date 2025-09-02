@@ -1,6 +1,5 @@
 import random
 import datetime
-from utils import suffix
 import re
 
 

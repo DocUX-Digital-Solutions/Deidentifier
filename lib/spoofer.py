@@ -9,7 +9,8 @@ from typing import List, Dict, Tuple, Callable, Set, Optional, Iterable
 import numpy as np
 from frozendict import FrozenOrderedDict
 
-from date import Date, DateConverter
+from lib.date import Date, DateConverter
+from lib.type_clusters import ParsedName, DEID_Clusters, HCW_NameFormats
 from ml_util.label_tokens import CompiledDocLabels, CompiledDocLabelSpoofer
 from ml_util.multi import multi_cpu_map
 from ml_util import docux_logger
@@ -59,7 +60,7 @@ class TypeSpoofer:
         raise NotImplementedError
 
     def spoof_values(self,
-                     values: Dict[str, int]) -> Dict[Tuple: Iterable[str]]:
+                     values: Dict[str, int]) -> Dict[Tuple[str], Iterable[str]]:
         return {form_set: self.spoof_value(form_set, count)
                 for form_set, count in zip(*sets_for_tally(values, self.are_equal))}
 
@@ -777,7 +778,7 @@ class DateSpoofer(TypeSpoofer):
         return out
 
     def spoof_values(self,
-                     values: Dict[str, int]) -> Dict[Tuple: Iterable[str]]:
+                     values: Dict[str, int]) -> Dict[Tuple, Iterable[str]]:
         date_forms: Dict[Date, Dict[str, int]] = defaultdict(dict)
         for raw, cnt in values.items():
             parsed_date, _ = self.date_converter.string_to_date_and_format(raw)
@@ -795,7 +796,7 @@ class DateSpoofer(TypeSpoofer):
 
 @dataclass(frozen=True)
 class NameSpoofer(TypeSpoofer):
-    def spoof_value(self, given, middle, surname, credential, count: int) -> str:
+    def spoof_value(self, name: ParsedName, count: int) -> str:
         raise NotImplementedError
 
     @staticmethod
@@ -803,7 +804,7 @@ class NameSpoofer(TypeSpoofer):
         raise NotImplementedError
 
     def spoof_values(self,
-                     values: Dict[str, int]) -> Dict[Tuple: Iterable[str]]:
+                     values: Dict[str, int]) -> Dict[Tuple, Iterable[str]]:
         name_constellations = []
         for name, cnt in values.items():
             found = False
@@ -821,6 +822,7 @@ class NameSpoofer(TypeSpoofer):
                for string_set, tally in name_constellations}
 
         return out
+
 
 @dataclass(frozen=True)
 class HealthCareWorkerSpoofer(NameSpoofer):
@@ -856,9 +858,7 @@ class HealthCareWorkerSpoofer(NameSpoofer):
     name_format_weights: List[int]
     convert_name_to_string: Dict[str, Callable]
 
-    _name_formats: Tuple[str] = ("NAME, NAME, CRE",
-                                 "NAME, FIRSTNAME/NAME, CRE",
-                                 "NAME NAME/CRE NAME/NAME CRE")
+    _name_formats = HCW_NameFormats
 
     @staticmethod
     def _create_credential_tally() -> Dict[str, int]:
@@ -939,102 +939,105 @@ class HealthCareWorkerSpoofer(NameSpoofer):
         else:
             return "NAME NAME/CRE NAME/NAME CRE"
 
-    @staticmethod
-    def count_name_format_frequencies(name_list) -> Dict[str, int]:
-        """Takes the list of all names of the reports
-Returns the number of names per name format
-        """
-        frequencies_dict = \
-            {n: 0
-             for n in HealthCareWorkerSpoofer._name_formats}
-
-        for name in name_list:
-            frequencies_dict[HealthCareWorkerSpoofer.parse_name_format(name)] += 1
-
-        return frequencies_dict
+#     @staticmethod
+#     def count_name_format_frequencies(name_list) -> Dict[str, int]:
+#         """Takes the list of all names of the reports
+# Returns the number of names per name format
+#         """
+#         frequencies_dict = \
+#             {n: 0
+#              for n in HealthCareWorkerSpoofer._name_formats}
+#
+#         for name in name_list:
+#             frequencies_dict[HealthCareWorkerSpoofer.parse_name_format(name)] += 1
+#
+#         return frequencies_dict
 
     # Copied wholesale -- losts of "magic numbers" here...
 
     @staticmethod
-    def convert_name_to_format_1(firstname, middlename, lastname, credential):
+    def convert_name_to_format_1(name: ParsedName):
         random_number = random.random()
+        firstname = name.given
         if random_number > 0.9:
-            firstname += " " + middlename[0]
+            firstname += " " + name.middle[0]
             if random.random() > 0.8:
                 firstname += "."
         elif random_number > 0.8:
-            firstname += " " + middlename
+            firstname += " " + name.middle
 
-        if credential[0:2].lower() == "dr" and random.random() > 0.1:
-            return "{} {}, {}".format(credential, lastname, firstname)
+        if name.credential[0:2].lower() == "dr" and random.random() > 0.1:
+            return "{} {}, {}".format(name.credential, name.surname, firstname)
 
         if random.random() > 0.5:
-            return "{}, {}, {}".format(firstname, lastname, credential)
+            return "{}, {}, {}".format(firstname, name.surname, name.credential)
         else:
-            return "{}, {}, {}".format(lastname, firstname, credential)
+            return "{}, {}, {}".format(name.surname, firstname, name.credential)
 
     @staticmethod
-    def convert_name_to_format_2(firstname, middlename, lastname, credential):
+    def convert_name_to_format_2(name: ParsedName):
         random_number = random.random()
+        firstname = name.given
         if random_number > 0.9:
-            firstname += " " + middlename[0]
+            firstname += " " + name.middle[0]
             if random.random() > 0.6:
                 firstname += "."
         elif random_number > 0.8:
-            firstname += " " + middlename
+            firstname += " " + name.middle
 
         prob_list = [0.875, 0.75, 0.5, 0.25, 0.125]
-        if credential[0:2].lower() == "dr":
+        if name.credential[0:2].lower() == "dr":
             prob_list = [0.6, 0.2, 0.15, 0.1, 0.05]
 
         random_number = random.random()
         if random_number > prob_list[0]:
-            return "{}, {}".format(firstname, lastname)
+            return "{}, {}".format(firstname, name.surname)
         elif random_number > prob_list[1]:
-            return "{}, {}".format(lastname, firstname)
+            return "{}, {}".format(name.surname, firstname)
         elif random_number > prob_list[2]:
-            return "{} {}, {}".format(firstname, lastname, credential)
+            return "{} {}, {}".format(firstname, name.surname, name.credential)
         elif random_number > prob_list[3]:
-            return "{} {}, {}".format(lastname, firstname, credential)
+            return "{} {}, {}".format(name.surname, firstname, name.credential)
         elif random_number > prob_list[4]:
-            return "{}, {}".format(firstname, credential)
+            return "{}, {}".format(firstname, name.credential)
         else:
-            return "{}, {}".format(lastname, credential)
+            return "{}, {}".format(name.surname, name.credential)
 
     @staticmethod
-    def convert_name_to_format_3(firstname, middlename, lastname, credential):
+    def convert_name_to_format_3(name: ParsedName):
         random_number = random.random()
+        firstname = name.given
         if random_number > 0.9:
-            firstname += " " + middlename[0]
+            firstname += " " + name.middle[0]
             if random.random() > 0.8:
                 firstname += "."
         elif random_number > 0.8:
-            firstname += " " + middlename
+            firstname += " " + name.middle
 
         random_number = random.random()
         prob_list = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
-        if credential[0:2].lower() == "dr":
+        if name.credential[0:2].lower() == "dr":
             prob_list = [0.93, 0.86, 0.84, 0.82, 0.58, 0.34, 0.32, 0.3, 0.14]
         if random_number > prob_list[0]:
-            return "{} {}".format(firstname, lastname)
+            return "{} {}".format(firstname, name.surname)
         elif random_number > prob_list[1]:
-            return "{} {}".format(lastname, firstname)
+            return "{} {}".format(name.surname, firstname)
         elif random_number > prob_list[2]:
-            return "{} {} {}".format(firstname, lastname, credential)
+            return "{} {} {}".format(firstname, name.surname, name.credential)
         elif random_number > prob_list[3]:
-            return "{} {} {}".format(lastname, firstname, credential)
+            return "{} {} {}".format(name.surname, firstname, name.credential)
         elif random_number > prob_list[4]:
-            return "{} {} {}".format(credential, lastname, firstname)
+            return "{} {} {}".format(name.credential, name.surname, firstname)
         elif random_number > prob_list[5]:
-            return "{} {} {}".format(credential, firstname, lastname)
+            return "{} {} {}".format(name.credential, firstname, name.surname)
         elif random_number > prob_list[6]:
-            return "{} {}".format(firstname, credential)
+            return "{} {}".format(firstname, name.credential)
         elif random_number > prob_list[7]:
-            return "{} {}".format(lastname, credential)
+            return "{} {}".format(name.surname, name.credential)
         elif random_number > prob_list[8]:
-            return "{} {}".format(credential, lastname)
+            return "{} {}".format(name.credential, name.surname)
         else:
-            return "{} {}".format(credential, firstname)
+            return "{} {}".format(name.credential, firstname)
 
     def generate_random_name(self, name_strings: Set[str]) -> Tuple[str, str, str, str]:
         return (self.given_spoofer.give_random_item(name_strings),
@@ -1098,30 +1101,30 @@ class PatientSpoofer(NameSpoofer):
                    _max_tries=max_tries)
 
     @staticmethod
-    def convert_patient_to_string(firstname, middlename, lastname, honorific):
+    def convert_patient_to_string(patient_name: ParsedName):
         random_number = random.random()
 
         if random_number > 0.95:
-            firstname += " " + middlename[0]
+            patient_name.given += " " + patient_name.middle
             if random.random() > 0.6:
-                firstname += "."
+                patient_name.given += "."
         elif random_number > 0.9:
-            firstname += " " + middlename
+            patient_name.given += " " + patient_name.middle
 
         random_number = random.random()
 
         if random_number > 0.45:
-            return "{} {}".format(firstname, lastname)
+            return "{} {}".format(patient_name.given, patient_name.surname)
         elif random_number > 0.35:
-            return "{} {}".format(lastname, firstname)
+            return "{} {}".format(patient_name.surname, patient_name.given)
         elif random_number > 0.25:
-            return "{} {} {}".format(honorific, lastname, firstname)
+            return "{} {} {}".format(patient_name.honorific, patient_name.surname, patient_name.given)
         elif random_number > 0.15:
-            return "{} {} {}".format(honorific, firstname, lastname)
+            return "{} {} {}".format(patient_name.honorific, patient_name.given, patient_name.surname)
         elif random_number > 0.05:
-            return "{} {}".format(honorific, lastname)
+            return "{} {}".format(patient_name.honorific, patient_name.surname)
         else:
-            return "{} {}".format(honorific, firstname)
+            return "{} {}".format(patient_name.honorific, patient_name.given)
 
     @staticmethod
     def give_name_set(name: str) -> Set[str]:
@@ -1130,13 +1133,13 @@ class PatientSpoofer(NameSpoofer):
                     if n.rstrip() not in PatientSpoofer._honorifics])
 
 
-    def spoof_value(self, given, middle, surname, credential, count: int) -> List[str]:
-        new_name_fields = (self.given_spoofer.give_random_item(given),
-                           self.given_spoofer.give_random_item(middle),
-                           self.surname_spoofer.give_random_item(surname),
-                           self.honorific_spoofer.give_random_item(credential))
+    def spoof_value(self, name: ParsedName, count: int) -> List[str]:
+        new_name = ParsedName(self.given_spoofer.give_random_item(name.fields),
+                              self.given_spoofer.give_random_item(name.middle),
+                              self.surname_spoofer.give_random_item(name.surname),
+                              self.honorific_spoofer.give_random_item(name.credential))
 
-        return [self.convert_patient_to_string(*new_name_fields) for _ in range(count)]
+        return [self.convert_patient_to_string(new_name) for _ in range(count)]
 
 
 @dataclass(frozen=True)
@@ -1147,23 +1150,31 @@ class Spoofer:
 
     @classmethod
     def create(cls,
-               value_tallies: Dict[str, Dict[str, int]],
                date_tally: Dict[Date, int],
                date_format_tally: Dict[str, int],
-               hcw_surname_tally: Dict[str, int],
-               hcw_given_tally: Dict[str, int],
-               hcw_name_format_tally: Dict[str, int],
-               patient_surname_tally: Dict[str, int],
-               patient_given_tally: Dict[str, int],
 
-               hospital_tally: Dict[str, int],
-               department_tally: Dict[str, int],
-               university_tally: Dict[str, int],
-               hospital_format_tally: Dict[str, int],
                frequent_word_list: List[str],
 
-               unique_tally: Dict[str, int],
-               phone_tally: Dict[str, int],
+               tally_clusters: DEID_Clusters,
+
+               # vendor_tally: Dict[str, int],
+               #
+               # hcw_surname_tally: Dict[str, int],
+               # hcw_given_tally: Dict[str, int],
+               # hcw_name_format_tally: Dict[str, int],
+               #
+               # patient_surname_tally: Dict[str, int],
+               # patient_given_tally: Dict[str, int],
+               #
+               # hospital_tally: Dict[str, int],
+               # department_tally: Dict[str, int],
+               # university_tally: Dict[str, int],
+               # hospital_format_tally: Dict[str, int],
+               #
+               # unique_tally: Dict[str, int],
+               #
+               # phone_tally: Dict[str, int],
+
                ):
         '''
         Need:
@@ -1176,14 +1187,14 @@ class Spoofer:
         # Need to indicate field names -- make into a dictionary??
 
         type_spoofers = {
-            "VENDOR": VendorSpoofer.create(value_tallies['VENDOR']),
             "DATES": DateSpoofer.create(min_date=all_dates[0],
                                         max_date=all_dates[-1],
                                         date_tally=date_tally,
                                         date_format_tally=date_format_tally),
-            "HCW": HealthCareWorkerSpoofer.create(hcw_surname_tally,
-                                                  hcw_given_tally,
-                                                  hcw_name_format_tally),
+            "VENDOR": VendorSpoofer.create(tally_clusters.vendor.tally),
+            "HCW": HealthCareWorkerSpoofer.create(tally_clusters.hcw.surname.tally,
+                                                  tally_clusters.hcw.given.tally,
+                                                  tally_clusters.hcw.name_format.tally),
             "PATIENT": PatientSpoofer.create(patient_surname_tally,
                                              patient_given_tally),
             "HOSPITAL": HospitalSpoofer.create(hospital_tally,
@@ -1191,8 +1202,8 @@ class Spoofer:
                                                university_tally,
                                                hospital_format_tally,
                                                frequent_word_list),
-            "UNIQUE": UniqueSpoofer.create(unique_tally),
-            "PHONE": PhoneSpoofer.create(phone_tally),
+            "UNIQUE": UniqueSpoofer.create(tally_clusters.unique.tally),
+            "PHONE": PhoneSpoofer.create(tally_clusters.phone.tally),
             "AGE": AgeSpoofer.create(),
         }
 
@@ -1219,3 +1230,4 @@ class Spoofer:
         raw_out = multi_cpu_map(self.process_report, (reports, label_sets))
 
         return [p[0] for p in raw_out], [p[1] for p in raw_out]
+

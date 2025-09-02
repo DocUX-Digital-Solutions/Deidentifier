@@ -1,9 +1,11 @@
 from typing import List, Union
+
+from lib.utils import load_input
 from ml_util import docux_logger
 from ml_util.encounter_record import EncounterRecord
 from ml_util.label_tokens import TokenLabeler
 from ml_util.devices import num_cpus, cpu_only
-from label_inventory import LABEL_INVENTORY
+from lib.label_inventory import LABEL_INVENTORY
 
 
 logger = docux_logger.give_logger()
@@ -18,6 +20,7 @@ def extract_deidentification_labels(inputs: List[Union[str, EncounterRecord]],
                                     cpu_process_multiplier: int = 2,
                                     gpu_batch_size: int = 32,
                                     ):
+    logger.info(f"begin extraction (outer).")
     if isinstance(inputs[0], EncounterRecord):
         inputs = [str(r) for r in inputs]
 
@@ -38,17 +41,17 @@ def extract_deidentification_labels(inputs: List[Union[str, EncounterRecord]],
 
 if __name__ == '__main__':
     import argparse
-    import json
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_jsonls', type=str, nargs='+', required=True)
     parser.add_argument('--output_np', type=str, required=True)
+    parser.add_argument('--log_file', type=str, default='generate_label_dump.log')
     args = parser.parse_args()
 
-    input: List[str] = []
-    for jsonl_file in args.input_jsonls:
-        with open(jsonl_file, "r", encoding='utf-8') as in_H:
-            for line in in_H:
-                input.append(json.loads(line.strip()))
+    docux_logger.configure_logger(logger, log_file=args.log_file, supress_stdout=False)
+
+    logger.info(f"starting.")
+    _, input = load_input(args.input_jsonls)
+    logger.info(f"loaded input.")
 
     extract_deidentification_labels(input, args.output_np)

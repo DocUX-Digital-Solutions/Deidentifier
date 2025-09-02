@@ -1,6 +1,5 @@
 import random
 import datetime
-from utils import suffix
 
 
 def convert_date_to_string_full_digits_with_trailing_zeros(

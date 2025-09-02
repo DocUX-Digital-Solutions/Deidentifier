@@ -4,8 +4,8 @@ from dataclasses import dataclass
 from typing import List, Set
 import numpy as np
 
-from ml_util.label_tokens import TokenClassificationOutput, TokenClassificationOutputEditor
-
+from ml_util.label_tokens import TokenClassificationOutputEditor
+from ml_util.classes import TokenClassificationOutput
 
 '''
 * Working with labels for ages, hospitals and vendors.
@@ -308,15 +308,16 @@ class LabelPostprocessingModel:
             predictions[i] = self.propagate_predictions_to_letters_around(
                 predictions[i], reports[i]
             )
-        predictions = self.check_ordering(predictions)
+        self.check_ordering(predictions)
 
         for i in range(len(reports)):
             predictions[i] = self.fuse_continuous_predictions(predictions[i], reports[i])
-        predictions = self.check_ordering(predictions)
+        self.check_ordering(predictions)
 
         for i in range(len(reports)):
             predictions[i] = self.fuse_neighbor_predictions_from_the_same_class(predictions[i], reports[i])
-        predictions = self.check_ordering(predictions)
+        self.check_ordering(predictions)
+
         # ignore model_labels_to_hips_labels
         # do *not* insert labels into the text.
 
@@ -387,7 +388,7 @@ class LabelPostprocessingModel:
         return prediction_list
 
     def check_ordering(self,
-                       predictions: List[TokenClassificationOutput]):
+                       predictions: List[List[TokenClassificationOutput]]):
         # Check that the predictions are correctly ordered, and no overlapping predictions
         for prediction in predictions:
             for i in range(len(prediction) - 1):
@@ -468,7 +469,7 @@ class LabelPostprocessingModel:
                 <= prediction_rule_based_list[i + 1].start_char
             )
 
-        prediction_list = self.check_ordering(prediction_list)
+        self.check_ordering([prediction_list])
 
         if len(prediction_rule_based_list):
             assert (

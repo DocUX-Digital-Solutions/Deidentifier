@@ -823,7 +823,7 @@ Start and end must be round dates
 
     # Database surnames
     data_surnames = (
-        pd.DataFrame(pd.read_csv("../Common_Surnames_Census_2000.csv").iloc[:, 0])
+        pd.DataFrame(pd.read_csv("../rsrc/Common_Surnames_Census_2000.csv").iloc[:, 0])
         .astype("str")
         .drop_duplicates()
         .dropna()
@@ -1432,7 +1432,7 @@ This function will return a random patient.
 
     try:
         data_hospitals = (
-            pd.read_csv("../hospitals.txt", delimiter="\t", header=None)
+            pd.read_csv("../rsrc/hospitals.txt", delimiter="\t", header=None)
             .rename(columns={0: "hospital"})
             .astype("str")
             .drop_duplicates()
@@ -1442,7 +1442,7 @@ This function will return a random patient.
     except UnicodeDecodeError:
         data_hospitals = (
             pd.read_csv(
-                "../hospitals.txt",
+                "../rsrc/hospitals.txt",
                 delimiter="\t",
                 header=None,
                 encoding="unicode_escape",
@@ -1454,7 +1454,7 @@ This function will return a random patient.
         )
 
     data_universities = (
-        pd.read_csv("../universities.txt", delimiter="\t", header=None)
+        pd.read_csv("../rsrc/universities.txt", delimiter="\t", header=None)
         .rename(columns={0: "university"})
         .astype("str")
         .drop_duplicates()
@@ -1487,7 +1487,7 @@ This function will return a random patient.
 
     # Counter(" ".join(data_hospitals["hospital"]).split()).most_common(100)
     data_frequent_tokens = (
-        pd.read_csv("../frequent_hospitals_tokens.txt", delimiter="\t", header=None)
+        pd.read_csv("../rsrc/frequent_hospitals_tokens.txt", delimiter="\t", header=None)
         .rename(columns={0: "token"})
         .astype("str")
         .drop_duplicates()
@@ -1825,7 +1825,7 @@ This function will return a random hospital.
 
     import json
 
-    with open("../companies.txt", "r") as fp:
+    with open("../rsrc/companies.txt", "r") as fp:
         data_vendors = json.load(fp)
 
     assert not len(list(filter(lambda x: (not isinstance(x, str)), data_vendors)))
